@@ -1,0 +1,16 @@
+{
+  "name": "irene",
+  "version": "0.1.0",
+  "description": "",
+  "author": "Mahmud Ridwan",
+  "license": "BSD-2-Clause",
+  "dependencies": {
+    "body-parser": "^1.8.2",
+    "express": "^4.9.2",
+    "iced-coffee-script": "^1.7.1-f",
+    "morgan": "^1.3.1",
+    "request": "^2.44.0",
+    "slack-notify": "^0.1.2",
+    "underscore": "^1.7.0"
+  }
+}
