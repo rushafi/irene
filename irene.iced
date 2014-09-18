@@ -66,6 +66,9 @@ module.exports = exports = class Irene
 				.trim()
 
 		say: (msg) ->
+			if not @chan?
+				return console.log msg
+
 			await slackNotify.send
 				channel: "##{@chan}"
 				username: process.env.SLACK_USERNAME
