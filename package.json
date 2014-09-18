@@ -1,0 +1,15 @@
+{
+  "name": "irene",
+  "version": "0.1.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Mahmud Ridwan",
+  "license": "BSD-2-Clause",
+  "dependencies": {
+    "express": "^4.9.2",
+    "slack-notify": "^0.1.2"
+  }
+}
