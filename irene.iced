@@ -14,9 +14,14 @@ module.exports = exports = class Irene
 			return func ctx, data
 
 		await wolframAlpha.query ctx.msg, defer err, res
-		pod = res?.queryresult?.pod?[0]
-		if pod?
-			return ctx.say pod.subpod[0].img[0].$.src
+		pods = res?.queryresult?.pod
+		for pod in pods or []
+			if pod.$.primary
+				if pod.$.scanner is 'Data'
+					ctx.say pod.subpod[0].plaintext[0]
+				else
+					ctx.say pod.subpod[0].img[0].$.src
+				return
 
 		ctx.say 'I don\'t understand'
 
