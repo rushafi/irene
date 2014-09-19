@@ -76,9 +76,7 @@ module.exports = exports = class Irene
 			@chan = data.channel_name
 			@msg = data.text[data.trigger_word.length...]
 				.replace(/\s+/, ' ')
-				.trim()
-				.replace(/^\.+/, '')
-				.replace(/^:+/, '')
+				.replace(/^[:.\s]+/, '')
 				.trim()
 
 		say: (msg) ->
