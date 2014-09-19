@@ -1,5 +1,6 @@
 fs = require 'fs'
 slackNotify = require('slack-notify') process.env.SLACK_WEBHOOK_URL
+wolframAlpha = new (require 'node-wolfram') process.env.WOLFRAM_APP_ID
 
 module.exports = exports = class Irene
 	constructor: ->
@@ -7,11 +8,17 @@ module.exports = exports = class Irene
 		for filename in fs.readdirSync "#{__dirname}/cmds"
 			require("#{__dirname}/cmds/#{filename}").bind? @
 
-	do: (ctx) ->
+	'do': (ctx) ->
 		[func, data] = @cmds.find ctx
-		if not func?
-			return ctx.say 'I don\'t understand'
-		func ctx, data
+		if func?
+			return func ctx, data
+
+		await wolframAlpha.query ctx.msg, defer err, res
+		pod = res?.queryresult?.pod?[0]
+		if pod?
+			return ctx.say pod.subpod[0].img[0].$.src
+
+		ctx.say 'I don\'t understand'
 
 	@Commands = class Commands
 		constructor: ->
@@ -57,6 +64,7 @@ module.exports = exports = class Irene
 
 				if match?
 					return [func, match]
+			return []
 
 	@Context = class Context
 		constructor: (data) ->
@@ -75,6 +83,7 @@ module.exports = exports = class Irene
 				icon_emoji: process.env.SLACK_ICON_EMOJI
 				icon_url: process.env.SLACK_ICON_URL
 				text: msg
+				unfurl_links: yes
 			defer err
 			if err?
 				return console.log err
