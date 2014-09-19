@@ -72,6 +72,8 @@ module.exports = exports = class Irene
 			@msg = data.text[data.trigger_word.length...]
 				.replace(/\s+/, ' ')
 				.trim()
+				.replace(/^\.+/, '')
+				.trim()
 
 		say: (msg) ->
 			if not @chan?
