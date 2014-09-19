@@ -78,6 +78,7 @@ module.exports = exports = class Irene
 				.replace(/\s+/, ' ')
 				.trim()
 				.replace(/^\.+/, '')
+				.replace(/^:+/, '')
 				.trim()
 
 		say: (msg) ->
