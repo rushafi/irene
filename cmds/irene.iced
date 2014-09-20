@@ -12,3 +12,6 @@ request = require 'request'
 	irene.cmds.add 'who are you', (ctx, {targ, q}) =>
 		ctx.say 'I am Irene'
 
+	irene.cmds.add 'how old are you', (ctx, {targ, q}) =>
+		ctx.say 'Why do you ask?'
+
