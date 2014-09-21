@@ -17,8 +17,8 @@ module.exports = exports = class Irene
 		pods = res?.queryresult?.pod
 		for pod in pods or []
 			if pod.$.title isnt 'Input interpretation'
-			  if pod.$.scanner is 'Data' and pod.$.id is 'Result'
-			    break
+				if pod.subpod[0].plaintext[0].match /wolfram/i
+					break
 				if pod.subpod[0].img[0].$.height <= 20
 					ctx.say pod.subpod[0].plaintext[0]
 				else
