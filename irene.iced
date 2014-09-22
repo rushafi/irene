@@ -19,10 +19,10 @@ module.exports = exports = class Irene
 			if pod.$.title isnt 'Input interpretation'
 				if pod.subpod[0].plaintext[0].match /wolfram/i
 					break
-				if pod.subpod[0].img[0].$.height <= 20
-					ctx.say pod.subpod[0].plaintext[0]
-				else
-					ctx.say pod.subpod[0].img[0].$.src
+				#if pod.subpod[0].img[0].$.height <= 20
+				ctx.say pod.subpod[0].plaintext[0]
+				#else
+				#	ctx.say pod.subpod[0].img[0].$.src
 				return
 
 		ctx.say 'I don\'t understand'
