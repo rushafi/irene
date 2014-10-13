@@ -68,7 +68,7 @@ request = require 'request'
 
 			body = JSON.parse body
 
-			r = "Hey <@#{body.user.name}>! Let us know what you prefer:\n"
+			r = "Hey <@#{body.user.name}>! Let us know what you prefer by clicking on it:\n"
 			for key, cand of poll.cands
 				r += "#{key}. <#{process.env.BASE}/polls/#{poll.id}/cands/#{key}/pick?token=#{voter.token}|#{cand}>\n"
 			ctx.say r,
