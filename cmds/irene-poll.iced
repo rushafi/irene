@@ -60,6 +60,31 @@ request = require 'request'
 			r += "#{cand}. #{poll.cands[cand]} *#{perc}%*\n"
 		ctx.say r
 
+	irene.cmds.add 'show poll status', (ctx) =>
+		await Poll.findOne()
+		.where('chan', ctx.chan)
+		.where('closedAt', null)
+		.exec defer err, poll
+		if err?
+			return console.log err
+
+		if not poll?
+			return ctx.say 'No poll running'
+
+		if _.keys(poll.votes).length is 0
+			return ctx.say 'A poll is running... Awaiting votes...'
+
+		r = 'A poll is running... Current status:\n'
+		counts = {}
+		for key, cand of poll.cands
+			counts[key] = 0
+		for user, candKey of poll.votes
+			counts[candKey] += 1
+		for [cand, count] in _.sortBy(_.pairs(counts), ([candKey, count]) -> -count)
+			perc = Math.round(count/_.keys(poll.votes).length*1000)/10
+			r += "#{cand}. #{poll.cands[cand]} *#{perc}%*\n"
+		ctx.say r
+
 	irene.cmds.add /i\s+pick\s+(\d+)/i, (ctx, [n]) =>
 		await Poll.findOne()
 		.where('chan', ctx.chan)
