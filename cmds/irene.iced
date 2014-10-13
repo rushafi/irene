@@ -36,3 +36,5 @@ request = require 'request'
 	irene.cmds.add 'what is your birth date', (ctx, {targ, q}) =>
 		ctx.say 'Why do you ask?'
 
+	irene.cmds.add 'what makes you tick', (ctx, {targ, q}) =>
+		ctx.say 'https://github.com/hjr265/irene'
