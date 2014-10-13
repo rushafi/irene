@@ -62,7 +62,7 @@ app.route('/polls/:pollId/cands/:candKey/pick')
 	res.send "You picked \"#{poll.cands[params.candKey]}\""
 
 	if not prevVote? and _.keys(poll.votes).length is poll.voters.length
-		await request.get "https://slack.com/api/channels.info?token=#{process.env.SLACK_API_TOKEN}&channel=#{ctx.chan.id}", defer err, res, body
+		await request.get "https://slack.com/api/channels.info?token=#{process.env.SLACK_API_TOKEN}&channel=#{poll.chan}", defer err, res, body
 		if err?
 			return console.log err
 
