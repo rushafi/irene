@@ -1,6 +1,9 @@
 express = require 'express'
 Irene = require './irene'
+mongoose = require 'mongoose'
 slackNotify = require('slack-notify') process.env.SLACK_WEBHOOK_URL
+
+mongoose.connect process.env.MONGO_URL or process.env.MONGOHQ_URL
 
 irene = new Irene
 

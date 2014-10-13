@@ -1,3 +1,4 @@
+_ = require 'underscore'
 fs = require 'fs'
 slackNotify = require('slack-notify') process.env.SLACK_WEBHOOK_URL
 wolframAlpha = new (require 'node-wolfram') process.env.WOLFRAM_APP_ID
@@ -40,13 +41,16 @@ module.exports = exports = class Irene
 			for {pat, func} in @all
 				switch yes
 					when pat instanceof RegExp
-						data = ctx.msg.match pat
+						match = ctx.msg.match pat
 						if match
-							data = data[1...]
+							match = match[1...]
 
 					when typeof pat is 'string'
 						parts = pat.split ' '
-						words = ctx.msg.split ' '
+						lines = ctx.msg.split '\n'
+						words = lines[0].split ' '
+						if lines.length > 1
+							words.push lines[1...].join('\n')
 						if parts.length > words.length
 							continue
 						match = {}
@@ -80,9 +84,12 @@ module.exports = exports = class Irene
 				.replace(/\s+/, ' ')
 				.replace(/^[:.\s]+/, '')
 				.replace(/[.?\s]+$/, '')
+			@user =
+				id: data.user_id
+				name: data.user_name
 
 		say: (msg) ->
-			if not @chan?
+			if process.env.SLACK_PRETEND is 'yes'
 				return console.log msg
 
 			await slackNotify.send
