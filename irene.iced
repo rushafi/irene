@@ -79,7 +79,9 @@ module.exports = exports = class Irene
 
 	@Context = class Context
 		constructor: (data) ->
-			@chan = data.channel_name
+			@chan =
+				id: data.channel_id
+				name: data.channel_name
 			@msg = data.text[data.trigger_word.length...]
 				.replace(/\s+/, ' ')
 				.replace(/^[:.\s]+/, '')
@@ -93,7 +95,7 @@ module.exports = exports = class Irene
 				return console.log msg
 
 			await slackNotify.send
-				channel: "##{@chan}"
+				channel: "##{@chan.name}"
 				username: process.env.SLACK_USERNAME
 				icon_emoji: process.env.SLACK_ICON_EMOJI
 				icon_url: process.env.SLACK_ICON_URL

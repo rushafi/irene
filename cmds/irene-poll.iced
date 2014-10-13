@@ -12,7 +12,7 @@ request = require 'request'
 				cands[m[1]] = m[2]
 
 		poll = new Poll
-			chan: ctx.chan
+			chan: ctx.chan.id
 			cands: cands
 			votes: {}
 			createdBy: ctx.user.id
@@ -32,7 +32,7 @@ request = require 'request'
 
 	irene.cmds.add 'close poll', (ctx) =>
 		await Poll.findOne()
-		.where('chan', ctx.chan)
+		.where('chan', ctx.chan.id)
 		.where('closedAt', null)
 		.exec defer err, poll
 		if err?
@@ -62,7 +62,7 @@ request = require 'request'
 
 	irene.cmds.add 'show poll status', (ctx) =>
 		await Poll.findOne()
-		.where('chan', ctx.chan)
+		.where('chan', ctx.chan.id)
 		.where('closedAt', null)
 		.exec defer err, poll
 		if err?
@@ -87,7 +87,7 @@ request = require 'request'
 
 	irene.cmds.add /i\s+pick\s+(\d+)/i, (ctx, [n]) =>
 		await Poll.findOne()
-		.where('chan', ctx.chan)
+		.where('chan', ctx.chan.id)
 		.where('closedAt', null)
 		.exec defer err, poll
 		if err?
