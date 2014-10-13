@@ -57,7 +57,7 @@ request = require 'request'
 			counts[candKey] += 1
 		for [cand, count] in _.sortBy(_.pairs(counts), ([candKey, count]) -> -count)
 			perc = Math.round(count/_.keys(poll.votes).length*1000)/10
-			r += "#{cand}. #{poll.cands[cand]} *#{perc}%*\n"
+			r += "#{cand}. #{poll.cands[cand]} \u2014 *#{perc}%*\n"
 		ctx.say r
 
 	irene.cmds.add 'show poll status', (ctx) =>
@@ -82,7 +82,7 @@ request = require 'request'
 			counts[candKey] += 1
 		for [cand, count] in _.sortBy(_.pairs(counts), ([candKey, count]) -> -count)
 			perc = Math.round(count/_.keys(poll.votes).length*1000)/10
-			r += "#{cand}. #{poll.cands[cand]} *#{perc}%*\n"
+			r += "#{cand}. #{poll.cands[cand]} \u2014 *#{perc}%*\n"
 		ctx.say r
 
 	irene.cmds.add /i\s+pick\s+(\d+)/i, (ctx, [n]) =>
