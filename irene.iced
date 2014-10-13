@@ -17,7 +17,7 @@ module.exports = exports = class Irene
 		await wolframAlpha.query ctx.msg, defer err, res
 		pods = res?.queryresult?.pod
 		for pod in pods or []
-			if pod.$.title isnt 'Input interpretation'
+			if not _.contains(['Input', 'Input interpretation'], pod.$.title)
 				if pod.subpod[0].plaintext[0].match /wolfram/i
 					break
 				#if pod.subpod[0].img[0].$.height <= 20
