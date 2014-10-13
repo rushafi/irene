@@ -20,6 +20,14 @@ schema = new mongoose.Schema
 	closedAt:
 		type: Date
 
+	voters: [
+		id:
+			type: String
+
+		token:
+			type: String
+	]
+
 schema.index
 	chan: 1
 	closedAt: 1

@@ -90,17 +90,17 @@ module.exports = exports = class Irene
 				id: data.user_id
 				name: data.user_name
 
-		say: (msg) ->
+		say: (msg, opts) ->
 			if process.env.SLACK_PRETEND is 'yes'
 				return console.log msg
 
 			await slackNotify.send
-				channel: "##{@chan.name}"
+				channel: opts?.chan or "##{@chan.name}"
 				username: process.env.SLACK_USERNAME
 				icon_emoji: process.env.SLACK_ICON_EMOJI
 				icon_url: process.env.SLACK_ICON_URL
 				text: msg
-				unfurl_links: yes
+				unfurl_links: opts?.unfurl or yes
 			defer err
 			if err?
 				return console.log err

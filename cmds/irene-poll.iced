@@ -4,7 +4,7 @@ querystring = require 'querystring'
 request = require 'request'
 
 @bind = (irene) ->
-	irene.cmds.add 'start a poll :d*', (ctx, {d}) =>
+	irene.cmds.add 'start a straw poll :d*', (ctx, {d}) =>
 		cands = {}
 		for l in d.split('\n')
 			m = l.match /(\d+)\.\s*(.+)/
@@ -29,6 +29,51 @@ request = require 'request'
 		keys = _.keys(poll.cands)
 		r += "Pick by responding with \"@Irene: I pick <n>\", where _n_ can be #{keys.slice(0, keys.length-1).join(', ')} or #{_.last(keys)}"
 		ctx.say r
+
+	irene.cmds.add 'start a poll :d*', (ctx, {d}) =>
+		cands = {}
+		for l in d.split('\n')
+			m = l.match /(\d+)\.\s*(.+)/
+			if m
+				cands[m[1]] = m[2]
+
+		await request.get "https://slack.com/api/channels.info?token=#{process.env.SLACK_API_TOKEN}&channel=#{ctx.chan.id}", defer err, res, body
+		if err?
+			return console.log err
+
+		body = JSON.parse body
+		voters = []
+		for member in body.channel.members
+			voters.push
+				id: member
+				token: "#{member}-#{_.random(1e20)}"
+
+		poll = new Poll
+			chan: ctx.chan.id
+			cands: cands
+			votes: {}
+			createdBy: ctx.user.id
+			createdAt: null
+			voters: voters
+		await poll.save defer err
+		if err?
+			if err.code is 11000
+				return ctx.say 'One at a time! A poll is already running...'
+			return console.log err
+
+		for voter in poll.voters
+			await request.get "https://slack.com/api/users.info?token=#{process.env.SLACK_API_TOKEN}&user=#{voter.id}", defer err, res, body
+			if err?
+				return console.log err
+
+			body = JSON.parse body
+
+			r = "Hey <@#{body.user.name}>! Let us know what you prefer:\n"
+			for key, cand of poll.cands
+				r += "#{key}. <#{process.env.BASE}/polls/#{poll.id}/cands/#{key}/pick?token=#{voter.token}|#{cand}>\n"
+			ctx.say r,
+				chan: "@#{body.user.name}"
+				unfurl: no
 
 	irene.cmds.add 'close poll', (ctx) =>
 		await Poll.findOne()
