@@ -94,7 +94,12 @@ request = require 'request'
 		if _.keys(poll.votes).length is 0
 			return ctx.say 'Poll closed'
 
-		r = 'Poll closed. Results:\n'
+		r = 'Poll closed. '
+		if _.keys(poll.votes).length is 1
+			r += "#{_.keys(poll.votes).length} vote received. "
+		else
+			r += "#{_.keys(poll.votes).length} votes received. "
+		r += 'Results:\n'
 		counts = {}
 		for key, cand of poll.cands
 			counts[key] = 0
@@ -119,7 +124,12 @@ request = require 'request'
 		if _.keys(poll.votes).length is 0
 			return ctx.say 'A poll is running... Awaiting votes...'
 
-		r = 'A poll is running... Current status:\n'
+		r = 'A poll is running... '
+		if _.keys(poll.votes).length is 1
+			r += "#{_.keys(poll.votes).length} vote received... "
+		else
+			r += "#{_.keys(poll.votes).length} votes received... "
+		r += 'Current status:\n'
 		counts = {}
 		for key, cand of poll.cands
 			counts[key] = 0
