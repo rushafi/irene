@@ -41,12 +41,25 @@ request = require 'request'
 		if err?
 			return console.log err
 
+		members = {}
+
 		body = JSON.parse body
 		voters = []
-		for member in body.channel.members
+		for memberId in body.channel.members
+			await request.get "https://slack.com/api/users.info?token=#{process.env.SLACK_API_TOKEN}&user=#{memberId}", defer err, res, body
+			if err?
+				return console.log err
+
+			body = JSON.parse body
+			user = body.user
+			if user.deleted
+				continue
+
+			members[memberId] = user
+
 			voters.push
-				id: member
-				token: "#{member}-#{_.random(1e20)}"
+				id: user.id
+				token: "#{user.id}-#{_.random(1e20)}"
 
 		poll = new Poll
 			chan: ctx.chan.id
