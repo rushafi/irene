@@ -2,6 +2,7 @@ _ = require 'underscore'
 express = require 'express'
 Irene = require './irene'
 mongoose = require 'mongoose'
+request = require 'request'
 slackNotify = require('slack-notify') process.env.SLACK_WEBHOOK_URL
 Poll = require './models/poll'
 
@@ -26,6 +27,76 @@ app.route('/api/do-standup')
 	, defer err
 	if err?
 		return next err
+	res.end()
+)
+
+app.route('/api/do-standup-check')
+.post((req, res, next) ->
+	await request.get "https://slack.com/api/channels.list?token=#{process.env.SLACK_API_TOKEN}", defer err, resp, body
+	if err?
+		return console.log err
+
+	body = JSON.parse body
+	chan = _.findWhere body.channels, name: process.env.SLACK_STANDUP_CHANNEL.substr(1)
+
+	users = []
+	for id in chan.members
+		await request.get "https://slack.com/api/users.info?token=#{process.env.SLACK_API_TOKEN}&user=#{id}", defer err, resp, body
+		if err?
+			return console.log err
+
+		body = JSON.parse body
+		user = body.user
+		if user.deleted
+			continue
+
+		users.push user
+
+	users = _.indexBy users, 'id'
+
+	await request.get "https://slack.com/api/channels.history?token=#{process.env.SLACK_API_TOKEN}&channel=#{chan.id}", defer err, resp, body
+	if err?
+		return console.log err
+
+	body = JSON.parse body
+	msgs = body.messages
+
+	hits = {}
+	for msg in msgs
+		if msg.hidden
+			continue
+		if msg.subtype is 'bot_message' and msg.username is process.env.SLACK_USERNAME and msg.text.indexOf('It\'s Standup Time') >= 0
+			break
+
+		if msg.type is 'message' and users[msg.user]?
+			for line in msg.text.split('\n')
+				m = line.trim().match /^(\d+)\s*\./
+				if m?
+					hits[msg.user] ?= {}
+					hits[msg.user][m[1]] = yes
+
+	r = ''
+	for id, user of users
+		hit = hits[id]
+		if hit and hit['1'] and hit['2'] and hit['3'] or _.contains(process.env.STANDUP_EXCLUDE?.split(','), user.name)
+			continue
+
+		if r.length > 0
+			r += ', '
+		r += "<@#{user.name}>"
+
+	r += ': Don\'t make me ask you again!'
+
+	await slackNotify.send
+		channel: process.env.SLACK_STANDUP_CHANNEL
+		username: process.env.SLACK_USERNAME
+		icon_emoji: process.env.SLACK_ICON_EMOJI
+		icon_url: process.env.SLACK_ICON_URL
+		text: r
+	, defer err
+	if err?
+		return next err
+		
 	res.end()
 )
 
