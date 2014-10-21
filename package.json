@@ -13,6 +13,7 @@
     "node-wolfram": "0.0.1",
     "request": "^2.44.0",
     "slack-notify": "^0.1.2",
+    "spintax": "0.0.1",
     "underscore": "^1.7.0"
   }
 }

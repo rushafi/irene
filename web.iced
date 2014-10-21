@@ -3,6 +3,7 @@ express = require 'express'
 Irene = require './irene'
 mongoose = require 'mongoose'
 request = require 'request'
+spintax = require 'spintax'
 slackNotify = require('slack-notify') process.env.SLACK_WEBHOOK_URL
 Poll = require './models/poll'
 
@@ -85,7 +86,7 @@ app.route('/api/do-standup-check')
 			r += ', '
 		r += "<@#{user.name}>"
 
-	r += ': Don\'t make me ask you again!'
+	r += spintax.unspin ': {Do not|Don\'t} make me ask{| you} again!'
 
 	await slackNotify.send
 		channel: process.env.SLACK_STANDUP_CHANNEL
