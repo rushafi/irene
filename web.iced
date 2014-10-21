@@ -96,7 +96,7 @@ app.route('/api/do-standup-check')
 	, defer err
 	if err?
 		return next err
-		
+
 	res.end()
 )
 
