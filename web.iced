@@ -86,6 +86,9 @@ app.route('/api/do-standup-check')
 			r += ', '
 		r += "<@#{user.name}>"
 
+	if r is ''
+		return res.end()
+
 	r += spintax.unspin ': {Do not|Don\'t} make me ask{| you} again!'
 
 	await slackNotify.send
