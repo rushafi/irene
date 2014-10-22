@@ -33,6 +33,8 @@ module.exports = exports = class Irene
 			'What do you mean?'
 			'And what exactly is that supposed to mean?'
 			'{I am|I\'m} not sure I understand'
+			'What are you trying to say?'
+			'I {do not|don\'t} think I can help you with that'
 		]
 
 	@Commands = class Commands
