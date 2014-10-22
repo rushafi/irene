@@ -2,6 +2,8 @@ _ = require 'underscore'
 fs = require 'fs'
 slackNotify = require('slack-notify') process.env.SLACK_WEBHOOK_URL
 wolframAlpha = new (require 'node-wolfram') process.env.WOLFRAM_APP_ID
+spintax = require 'spintax'
+util = require 'util'
 
 module.exports = exports = class Irene
 	constructor: ->
@@ -26,7 +28,12 @@ module.exports = exports = class Irene
 				#	ctx.say pod.subpod[0].img[0].$.src
 				return
 
-		ctx.say 'I don\'t understand'
+		ctx.say [
+			'I {do not|don\'t} understand'
+			'What do you mean?'
+			'And what exactly is that supposed to mean?'
+			'{I am|I\'m} not sure I understand'
+		]
 
 	@Commands = class Commands
 		constructor: ->
@@ -91,6 +98,10 @@ module.exports = exports = class Irene
 				name: data.user_name
 
 		say: (msg, opts) ->
+			if util.isArray msg
+				msg = _.sample msg
+			msg = spintax.unspin msg
+
 			if process.env.SLACK_PRETEND is 'yes'
 				return console.log msg
 
