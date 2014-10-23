@@ -3,6 +3,9 @@ querystring = require 'querystring'
 request = require 'request'
 
 @bind = (irene) ->
+	irene.cmds.add 'ping', (ctx, {q}) =>
+		ctx.say 'Pong'
+
 	irene.cmds.add 'what\'s your name', (ctx, {q}) =>
 		ctx.say 'My name is Irene'
 
