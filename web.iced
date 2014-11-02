@@ -2,6 +2,7 @@ _ = require 'underscore'
 express = require 'express'
 Irene = require './irene'
 mongoose = require 'mongoose'
+moment = require 'moment'
 request = require 'request'
 spintax = require 'spintax'
 slackNotify = require('slack-notify') process.env.SLACK_WEBHOOK_URL
@@ -100,6 +101,45 @@ app.route('/api/do-standup-check')
 	, defer err
 	if err?
 		return next err
+
+	res.end()
+)
+
+app.route('/api/do-birthday-wish')
+.post((req, res, next) ->
+	now = moment()
+	birthdays = process.env.BIRTHDAYS?.split('|') or []
+	for birthday in birthdays
+		[userId, month, date] = birthday.split '-'
+		if now.month()+1 is parseInt(month) and now.date() is parseInt(date)
+			await request.get "https://slack.com/api/users.info?token=#{process.env.SLACK_API_TOKEN}&user=#{userId}", defer err, resp, body
+			if err?
+				return console.log err
+
+			body = JSON.parse body
+			user = body.user
+
+			line = _.sample [
+				'Getting older and growing up are two very different things.  One is still an option.'
+				'The most frustrating thing about becoming an old cynical person is that it is difficult to blame someone for it happening.'
+				'Some people try to hide their age by calling themselves mature or seniors, but I like being honest with old people.'
+				'I wish I had remembered to get you a present.'
+				'I wish you were older today... Oh, my wish came true! Happy birthday'
+				'Wishing you enough air to blow out all of your candles. Happy Birthday'
+				'Have the best birthday anyone could expect to have at your age'
+				'Enjoy your senior citizen discounts. You deserve them. Happy birthday.'
+				'I wish today was not your birthday... Because I forgot to get you a present.'
+				'There\'s nothing funny about having a birthday and getting old when you ARE old.  That\'s why I am going to keep your birthday wishes totally serious.'
+			]
+			await slackNotify.send
+				channel: '#irene-test'
+				username: process.env.SLACK_USERNAME
+				icon_emoji: process.env.SLACK_ICON_EMOJI
+				icon_url: process.env.SLACK_ICON_URL
+				text: "<@#{userId}|#{user.name}>: #{line}"
+			, defer err
+			if err?
+				return next err
 
 	res.end()
 )
