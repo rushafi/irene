@@ -72,10 +72,15 @@ app.route('/api/do-standup-check')
 
 		if msg.type is 'message' and users[msg.user]?
 			for line in msg.text.split('\n')
-				m = line.trim().match /^(\d+)\s*\./
+				m = line.trim().match /^(\d+)\s*\.\s*[^\s]/
 				if m?
 					hits[msg.user] ?= {}
 					hits[msg.user][m[1]] = yes
+
+				m = line.trim().match /^(\d+)\s*\./
+				if m?
+					hits[msg.user] ?= {}
+					hits[msg.user][m[1]+'_e'] = yes
 
 	r = ''
 	for id, user of users
@@ -103,6 +108,35 @@ app.route('/api/do-standup-check')
 		return next err
 
 	res.end()
+
+	_.delay =>
+		r = ''
+		for id, user of users
+			hit = hits[id]
+			if hit and hit['1'] and hit['2'] and hit['3'] or _.contains(process.env.STANDUP_EXCLUDE?.split(','), user.name)
+				continue
+
+			if hit and hit['1_e'] and hit['2_e'] and hit['3_e']
+				if r.length > 0
+					r += ', '
+				r += "<@#{user.name}>"
+
+		if r is ''
+			return
+
+		r += ': You thought you could get away with this, didn\'t you?'
+
+		await slackNotify.send
+			channel: process.env.SLACK_STANDUP_CHANNEL
+			username: process.env.SLACK_USERNAME
+			icon_emoji: process.env.SLACK_ICON_EMOJI
+			icon_url: process.env.SLACK_ICON_URL
+			text: r
+		, defer err
+		if err?
+			console.log err
+
+	, 2000
 )
 
 app.route('/api/do-birthday-wish')
