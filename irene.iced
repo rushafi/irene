@@ -19,6 +19,9 @@ module.exports = exports = class Irene
 
 			switch yes
 				when v.type is 'message' and not v.subtype and v.user isnt @self.id
+					if not ctx.chan or not ctx.user
+						return done()
+
 					ctx.msg = v.text
 
 					if ctx.chan.id[0] isnt 'D' and ctx.msg.indexOf("<@#{@self.id}>") is -1
