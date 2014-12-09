@@ -209,6 +209,11 @@ app.route('/polls/:pollId/cands/:candKey/pick')
 			return console.log err
 )
 
+app.route('/')
+.get((req, res) ->
+	res.end()
+)
+
 await app.listen (port = process.env.PORT), defer err
 if err?
 	throw err
