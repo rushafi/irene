@@ -1,9 +1,12 @@
 _ = require 'underscore'
+async = require 'async'
 fs = require 'fs'
+request = require 'request'
 slackNotify = require('slack-notify') process.env.SLACK_WEBHOOK_URL
 wolframAlpha = new (require 'node-wolfram') process.env.WOLFRAM_APP_ID
 spintax = require 'spintax'
 util = require 'util'
+websocket = require 'nodejs-websocket'
 
 module.exports = exports = class Irene
 	constructor: ->
@@ -11,22 +14,88 @@ module.exports = exports = class Irene
 		for filename in fs.readdirSync "#{__dirname}/cmds"
 			require("#{__dirname}/cmds/#{filename}").bind? @
 
+		@q = async.queue (v, done) =>
+			ctx = new Irene.Context @conn, @chans[v.channel], @users[v.user]
+
+			switch yes
+				when v.type is 'message' and not v.subtype and v.user isnt @self.id
+					ctx.msg = v.text
+
+					if ctx.chan.id[0] isnt 'D' and ctx.msg.indexOf("<@#{@self.id}>") is -1
+						return done()
+
+					ctx.msg = ctx.msg
+						.replace("<@#{@self.id}>", '')
+						.replace(/\s+/, ' ')
+						.replace(/^[:.\s]+/, '')
+						.replace(/[.?\s]+$/, '')
+
+					@do ctx
+
+			done()
+
+	initialize: (done) ->
+		await request.get "https://slack.com/api/users.list?token=#{process.env.SLACK_API_TOKEN}", defer err, resp, body
+		if err?
+			return console.log err
+
+		body = JSON.parse body
+
+		@users = {}
+		for user in body.members
+			@users[user.id] = user
+			@users["@#{user.name}"] = user
+
+		await request.get "https://slack.com/api/channels.list?token=#{process.env.SLACK_API_TOKEN}", defer err, resp, body
+		if err?
+			return console.log err
+
+		body = JSON.parse body
+
+		@chans = {}
+		for chan in body.channels
+			@chans[chan.id] = chan
+			@chans["##{chan.name}"] = chan
+
+		await request.get "https://slack.com/api/im.list?token=#{process.env.SLACK_API_TOKEN}", defer err, resp, body
+		if err?
+			return console.log err
+
+		body = JSON.parse body
+
+		for chan in body.ims
+			@chans[chan.id] = chan
+
+		await request.get "https://slack.com/api/rtm.start?token=#{process.env.SLACK_BOT_TOKEN}", defer err, resp, body
+		if err?
+			return done err
+
+		body = JSON.parse body
+
+		@self = body.self
+
+		@conn = websocket.connect body.url, -> done()
+		@conn.on 'text', (v) =>
+			v = JSON.parse v
+			@q.push v
+
 	'do': (ctx) ->
 		[func, data] = @cmds.find ctx
 		if func?
 			return func ctx, data
 
-		await wolframAlpha.query ctx.msg, defer err, res
-		pods = res?.queryresult?.pod
-		for pod in pods or []
-			if not _.contains(['Input', 'Input interpretation'], pod.$.title)
-				if pod.subpod[0].plaintext[0].match /wolfram/i
-					break
-				#if pod.subpod[0].img[0].$.height <= 20
-				ctx.say pod.subpod[0].plaintext[0]
-				#else
-				#	ctx.say pod.subpod[0].img[0].$.src
-				return
+		if process.env.WOLFRAM_APP_ID
+			await wolframAlpha.query ctx.msg, defer err, res
+			pods = res?.queryresult?.pod
+			for pod in pods or []
+				if not _.contains(['Input', 'Input interpretation'], pod.$.title)
+					if pod.subpod[0].plaintext[0].match /wolfram/i
+						break
+					#if pod.subpod[0].img[0].$.height <= 20
+					ctx.say pod.subpod[0].plaintext[0]
+					#else
+					#	ctx.say pod.subpod[0].img[0].$.src
+					return
 
 		ctx.say [
 			'I {do not|don\'t} understand'
@@ -36,6 +105,25 @@ module.exports = exports = class Irene
 			'What are you trying to say?'
 			'I {do not|don\'t} think I can help you with that'
 		]
+
+	say: (chan, msg, done) ->
+		if util.isArray msg
+				msg = _.sample msg
+			msg = spintax.unspin msg
+			
+		if process.env.SLACK_PRETEND is 'yes'
+			return console.log msg
+
+		await @conn.sendText JSON.stringify({
+			id: 1
+			type: 'message'
+			channel: @chans[chan].id
+			text: msg
+		}), defer err
+		if err
+			return console.log err
+
+		done()
 
 	@Commands = class Commands
 		constructor: ->
@@ -87,17 +175,8 @@ module.exports = exports = class Irene
 			return []
 
 	@Context = class Context
-		constructor: (data) ->
-			@chan =
-				id: data.channel_id
-				name: data.channel_name
-			@msg = data.text[data.trigger_word.length...]
-				.replace(/\s+/, ' ')
-				.replace(/^[:.\s]+/, '')
-				.replace(/[.?\s]+$/, '')
-			@user =
-				id: data.user_id
-				name: data.user_name
+		constructor: (@conn, @chan, @user) ->
+			@msg = ''
 
 		say: (msg, opts) ->
 			if util.isArray msg
@@ -107,13 +186,11 @@ module.exports = exports = class Irene
 			if process.env.SLACK_PRETEND is 'yes'
 				return console.log msg
 
-			await slackNotify.send
-				channel: opts?.chan or "##{@chan.name}"
-				username: process.env.SLACK_USERNAME
-				icon_emoji: process.env.SLACK_ICON_EMOJI
-				icon_url: process.env.SLACK_ICON_URL
+			await @conn.sendText JSON.stringify({
+				id: 1
+				type: 'message'
+				channel: @chan.id
 				text: msg
-				unfurl_links: opts?.unfurl or yes
-			defer err
-			if err?
+			}), defer err
+			if err
 				return console.log err

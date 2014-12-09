@@ -11,6 +11,9 @@ Poll = require './models/poll'
 mongoose.connect process.env.MONGO_URL or process.env.MONGOHQ_URL
 
 irene = new Irene
+await irene.initialize defer err
+if err?
+	throw err
 
 app = express()
 
@@ -20,13 +23,7 @@ app
 
 app.route('/api/do-standup')
 .post((req, res, next) ->
-	await slackNotify.send
-		channel: process.env.SLACK_STANDUP_CHANNEL
-		username: process.env.SLACK_USERNAME
-		icon_emoji: process.env.SLACK_ICON_EMOJI
-		icon_url: process.env.SLACK_ICON_URL
-		text: '<!everyone> It\'s Standup Time! Can everyone answer these following few questions?\n1. What did you do yesterday?\n2. What do you plan on doing today?\n3. Is there anything you\'re blocked on?\n\nAlso, can you please make sure you\'ve updated the Trello board with what you\'re currently working on?'
-	, defer err
+	await irene.say process.env.SLACK_STANDUP_CHANNEL, '<!everyone> It\'s Standup Time! Can everyone answer these following few questions?\n1. What did you do yesterday?\n2. What do you plan on doing today?\n3. Is there anything you\'re blocked on?\n\nAlso, can you please make sure you\'ve updated the Trello board with what you\'re currently working on?', defer err
 	if err?
 		return next err
 	res.end()
@@ -97,13 +94,7 @@ app.route('/api/do-standup-check')
 
 	r += spintax.unspin ': {Do not|Don\'t} make me ask{| you} again!'
 
-	await slackNotify.send
-		channel: process.env.SLACK_STANDUP_CHANNEL
-		username: process.env.SLACK_USERNAME
-		icon_emoji: process.env.SLACK_ICON_EMOJI
-		icon_url: process.env.SLACK_ICON_URL
-		text: r
-	, defer err
+	await irene.say process.env.SLACK_STANDUP_CHANNEL, r, defer err
 	if err?
 		return next err
 
@@ -126,13 +117,7 @@ app.route('/api/do-standup-check')
 
 		r += ': You thought you could get away with this, didn\'t you?'
 
-		await slackNotify.send
-			channel: process.env.SLACK_STANDUP_CHANNEL
-			username: process.env.SLACK_USERNAME
-			icon_emoji: process.env.SLACK_ICON_EMOJI
-			icon_url: process.env.SLACK_ICON_URL
-			text: r
-		, defer err
+		await irene.say process.env.SLACK_STANDUP_CHANNEL, r, defer err
 		if err?
 			console.log err
 
@@ -165,13 +150,7 @@ app.route('/api/do-birthday-wish')
 				'I wish today was not your birthday... Because I forgot to get you a present.'
 				'There\'s nothing funny about having a birthday and getting old when you ARE old.  That\'s why I am going to keep your birthday wishes totally serious.'
 			]
-			await slackNotify.send
-				channel: '#irene-test'
-				username: process.env.SLACK_USERNAME
-				icon_emoji: process.env.SLACK_ICON_EMOJI
-				icon_url: process.env.SLACK_ICON_URL
-				text: "<@#{userId}|#{user.name}>: #{line}"
-			, defer err
+			await irene.say '#general', "<@#{userId}|#{user.name}>: #{line}", defer err
 			if err?
 				return next err
 
@@ -225,13 +204,7 @@ app.route('/polls/:pollId/cands/:candKey/pick')
 		body = JSON.parse body
 		user = body.user
 
-		await slackNotify.send
-			channel: chan.name
-			username: process.env.SLACK_USERNAME
-			icon_emoji: process.env.SLACK_ICON_EMOJI
-			icon_url: process.env.SLACK_ICON_URL
-			text: "<@#{user.name}>: All votes collected..."
-		, defer err
+		await irene.say chan.name, "<@#{user.name}>: All votes collected...", defer err
 		if err?
 			return console.log err
 )
