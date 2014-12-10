@@ -64,7 +64,7 @@ app.route('/api/do-standup-check')
 	for msg in msgs
 		if msg.hidden
 			continue
-		if msg.subtype is 'bot_message' and msg.username is process.env.SLACK_USERNAME and msg.text.indexOf('It\'s Standup Time') >= 0
+		if msg.user is irene.self.id and msg.text.indexOf('It\'s Standup Time') >= 0
 			break
 
 		if msg.type is 'message' and users[msg.user]?
