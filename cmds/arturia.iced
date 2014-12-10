@@ -36,7 +36,7 @@ HtmlEntities = require('html-entities').AllHtmlEntities
 		if err?
 			return console.log err
 
-		progId = body
+		progId = body.id
 
 		i = 32
 		check = ->
