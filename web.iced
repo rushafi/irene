@@ -81,6 +81,9 @@ app.route('/api/do-standup-check')
 
 	r = ''
 	for id, user of users
+		if id is irene.self.id
+			continue
+
 		hit = hits[id]
 		if hit and hit['1'] and hit['2'] and hit['3'] or _.contains(process.env.STANDUP_EXCLUDE?.split(','), user.name)
 			continue
