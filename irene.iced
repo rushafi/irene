@@ -16,10 +16,12 @@ module.exports = exports = class Irene
 
 		@q = async.queue (v, done) =>
 			ctx = new Irene.Context @conn, @chans[v.channel], @users[v.user]
+			ctx.chan ?= 
+				id: v.channel
 
 			switch yes
 				when v.type is 'message' and not v.subtype and v.user isnt @self.id
-					if not ctx.chan or not ctx.user
+					if not ctx.user
 						return done()
 
 					ctx.msg = v.text
@@ -54,20 +56,11 @@ module.exports = exports = class Irene
 			return console.log err
 
 		body = JSON.parse body
-
+		
 		@chans = {}
 		for chan in body.channels
 			@chans[chan.id] = chan
 			@chans["##{chan.name}"] = chan
-
-		await request.get "https://slack.com/api/im.list?token=#{process.env.SLACK_API_TOKEN}", defer err, resp, body
-		if err?
-			return console.log err
-
-		body = JSON.parse body
-
-		for chan in body.ims
-			@chans[chan.id] = chan
 
 		await request.get "https://slack.com/api/rtm.start?token=#{process.env.SLACK_BOT_TOKEN}", defer err, resp, body
 		if err?
