@@ -20,6 +20,7 @@ app = express()
 app
 .use(require('morgan')('combined'))
 .use(require('body-parser').urlencoded(extended: true))
+.use(require('body-parser').json())
 
 app.route('/api/do-standup')
 .post((req, res, next) ->
@@ -125,6 +126,50 @@ app.route('/api/do-standup-check')
 			console.log err
 
 	, 2000
+)
+
+app.route('/api/webhook/:channel')
+.post((req, res, next) ->
+	
+	hookType = req.body.object_kind
+	author = req.body.user.name
+	issueName = req.body.object_attributes.title
+	issueURL = req.body.object_attributes.url
+	assigneeId = req.body.object_attributes.assignee_id
+
+	await request.get "http://dev.muktosoft.com/gitlab/api/v3/users?private_token=#{process.env.GITLAB_API_TOKEN}\
+	&per_page=100", defer err, resp, body
+
+	if err?
+		return console.log.err
+
+	gitlabUsers = JSON.parse body
+	userDetails = _.findWhere gitlabUsers, id: assigneeId
+
+	# console.log userDetails
+	username = userDetails.username
+
+	await request.get "https://slack.com/api/users.list?token=#{process.env.SLACK_API_TOKEN}", defer err, resp, body
+	if err?
+		return console.log err
+
+	body = JSON.parse body
+	slackUser = _.findWhere body.members, name: username
+	# console.log slackUser
+
+	userId = slackUser.id
+
+	if hookType == 'issue'
+		await irene.say "##{req.params.channel}", "#{author} assigned a new issue: \"#{issueName}\" to <@#{userId}|#{username}>. Details: #{issueURL}", defer err
+		if err?
+			return next err
+
+	else if hookType == 'merge_request'
+		await irene.say "##{req.params.channel}", "<@#{userId}|#{username}>: You have a new merge request from #{author}", defer err
+		if err?
+			return next err
+
+	res.end()
 )
 
 app.route('/api/do-birthday-wish')
